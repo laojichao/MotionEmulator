@@ -1044,7 +1044,7 @@ fun TraceEditorPreview() {
 }
 
 private fun randomTraceData() =
-    WorkingData(Trace(NanoIdUtils.randomNanoId(), emptyList()), Metadata(0, name = "Near the moon"))
+    WorkingData(Trace(NanoIdUtils.randomNanoId(), "Near the moon", emptyList(), com.zhufucdev.me.stub.CoordinateSystem.WGS84, null), Metadata())
 
 private val saltTypeNames = mapOf(
     SaltType.Anchor to R.string.name_anchor,

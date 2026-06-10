@@ -6,4 +6,6 @@
             <enum name="gcp_maps" value="1"/>
         </attr>
     </declare-styleable>
+    <attr name="colorSurfaceVariant" format="color"/>
+    <attr name="selectableItemBackground" format="reference"/>
 </resources>

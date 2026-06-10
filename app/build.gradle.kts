@@ -46,6 +46,11 @@ android {
         compose = true
         buildConfig = true
     }
+
+    defaultConfig {
+        buildConfigField("String", "server_uri", "\"${project.findProperty("server_uri") ?: "http://localhost:20230"}\"")
+        buildConfigField("String", "product", "\"${project.findProperty("product") ?: "MotionEmulator"}\"")
+    }
     namespace = "com.zhufucdev.motion_emulator"
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.6"
@@ -59,11 +64,22 @@ android {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.5.1")
+        force("com.github.Redempt:Crunch:1.0")
+    }
+}
+
 dependencies {
     // Internal
     implementation(libs.sdk)
-    implementation(libs.stub)
     implementation(libs.update)
+    // Stub
+    implementation("com.zhufucdev.me:stub:1.0.0")
+    implementation("com.zhufucdev.me:plugin:1.0.0")
+    implementation("com.zhufucdev.me:xposed:1.0.0")
     // Ktor
     implementation(libs.ktor.client.jvm)
     implementation(libs.ktor.client.okhttp)
@@ -82,6 +98,15 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+    implementation("androidx.viewpager2:viewpager2:1.0.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.fragment:fragment-ktx:1.6.2")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.6")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.6")
     // KotlinX
     implementation(libs.kotlinx.coroutines)
     implementation(libs.kotlinx.serialization.json)
@@ -107,6 +132,16 @@ dependencies {
     implementation(libs.google.guava)
     implementation(libs.aventrix.jnanoid)
     implementation(libs.apache.commons.compress)
+
+    // AMap SDK
+    // Chart
+    implementation(libs.mpandroidchart)
+
+    // Preferences Serialization
+    implementation(libs.kprefs) {
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core")
+        exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-json")
+    }
 
     // AMap SDK
     implementation(libs.amap.map)

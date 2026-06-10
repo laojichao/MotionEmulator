@@ -21,7 +21,7 @@ vico = "1.13.1"
 jsonSerialization = "1.6.2"
 secrets = "2.0.1"
 ktor = "2.3.4"
-crunch = "1.1.2"
+crunch = "1.0"
 guava = "31.1-android"
 jnanoid = "2.0.0"
 compress = "1.22"
@@ -30,6 +30,8 @@ playMaps = "18.2.0"
 gmaps = "3.2.1"
 mapsUtils = "3.4.0"
 spongycastle = "1.58.0.0"
+mpandroidchart = "v3.1.0"
+kprefs = "0.9.0"
 
 stub = "1.1.3"
 update = "1.0.0"
@@ -85,6 +87,8 @@ google-maps-ktx = { group = "com.google.maps.android", name = "maps-ktx", versio
 google-maps-utils = { group = "com.google.maps.android", name = "android-maps-utils", version.ref = "mapsUtils" }
 google-gms-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playMaps" }
 madgag-spongycastle = { group = "com.madgag.spongycastle", name = "bcpkix-jdk15on", version.ref = "spongycastle" }
+mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpandroidchart" }
+kprefs = { group = "net.edwardday.serialization", name = "kprefs", version.ref = "kprefs" }
 
 stub = { group = "com.zhufucdev.me", name = "stub", version.ref = "stub" }
 update = { group = "com.zhufucdev.update", name = "app", version.ref = "update" }

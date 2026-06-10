@@ -120,6 +120,19 @@ abstract class DataStore<T : Data> {
 
     operator fun get(id: String) = data[id]
 
+    /**
+     * 存储原始 Data 对象
+     *
+     * 将原始 Data 对象包装为 WorkingData 后存储
+     *
+     * @param value 要存储的 Data 对象
+     * @param overwrite 是否覆盖已存在的数据
+     * @return 存储后的 DataLoader，如果已存在且不覆盖则返回 null
+     */
+    fun store(value: T, overwrite: Boolean = false): DataLoader<T>? {
+        return put(WorkingData(value, Metadata()), overwrite)
+    }
+
     override fun equals(other: Any?): Boolean =
         other is DataStore<*> && other::class == this::class && other.clazz == this.clazz
 

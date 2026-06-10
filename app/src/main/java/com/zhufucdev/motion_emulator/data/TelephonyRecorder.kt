@@ -23,6 +23,19 @@ import java.util.concurrent.Executor
 import kotlin.concurrent.timer
 import kotlin.reflect.full.memberFunctions
 
+/**
+ * 电话数据录制器（单例）
+ *
+ * 负责管理基站信息的录制，支持：
+ * - 基站信息变化监听
+ * - 基站位置变化监听
+ * - 邻近基站信息采集
+ * - 时间接近的 CellMoment 合并
+ *
+ * ## 合并策略
+ * 当两个 CellMoment 的时间差小于 50ms 且类型不同时，会将它们合并为一个。
+ * 这确保了同一时刻采集的多种基站信息被正确关联。
+ */
 object TelephonyRecorder {
     private lateinit var manager: TelephonyManager
     fun init(context: Context) {
@@ -30,6 +43,34 @@ object TelephonyRecorder {
         checkPermission = {
             context.checkCallingOrSelfPermission(Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
                     && context.checkCallingOrSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    /**
+     * 合并时间接近的 CellMoment
+     *
+     * 如果最后一个 CellMoment 的时间差小于 50ms 且类型不同，
+     * 则将两者合并；否则直接添加到 timeline
+     *
+     * @param timeline 当前的时间线列表
+     * @param moment 要添加的新 CellMoment
+     * @return 最终添加到 timeline 的 CellMoment（可能是合并后的）
+     */
+    private fun mergeIfPossible(timeline: ArrayList<CellMoment>, moment: CellMoment): CellMoment {
+        synchronized(TelephonyRecorder::class.java) {
+            if (timeline.isNotEmpty() &&
+                Math.abs(moment.elapsed - timeline.last().elapsed) <= 0.05f
+            ) {
+                val last = timeline.last()
+                if (!last.isSameTypeOf(moment)) {
+                    timeline.removeLast()
+                    val merged = last.merge(moment)
+                    timeline.add(merged)
+                    return merged
+                }
+            }
+            timeline.add(moment)
+            return moment
         }
     }
 
@@ -49,14 +90,12 @@ object TelephonyRecorder {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val telephonyCallback = object : TelephonyCallback(), TelephonyCallback.CellInfoListener, TelephonyCallback.CellLocationListener {
                 override fun onCellInfoChanged(cellInfo: MutableList<CellInfo>) {
-                    val moment = CellMoment(elapsed(), cellInfo)
-                    timeline.add(moment)
+                    val moment = mergeIfPossible(timeline, CellMoment(elapsed(), cellInfo))
                     updateListener?.invoke(moment)
                 }
 
                 override fun onCellLocationChanged(location: CellLocation) {
-                    val moment = CellMoment(elapsed(), location = location)
-                    timeline.add(moment)
+                    val moment = mergeIfPossible(timeline, CellMoment(elapsed(), location = location))
                     updateListener?.invoke(moment)
                 }
             }
@@ -70,8 +109,7 @@ object TelephonyRecorder {
                 @Deprecated("Deprecated in Java")
                 override fun onCellInfoChanged(cellInfo: MutableList<CellInfo>?) {
                     if (cellInfo != null) {
-                        val moment = CellMoment(elapsed(), cellInfo)
-                        timeline.add(moment)
+                        val moment = mergeIfPossible(timeline, CellMoment(elapsed(), cellInfo))
                         updateListener?.invoke(moment)
                     }
                 }
@@ -79,8 +117,7 @@ object TelephonyRecorder {
                 @Deprecated("Deprecated in Java")
                 override fun onCellLocationChanged(location: CellLocation?) {
                     if (location != null) {
-                        val moment = CellMoment(elapsed(), location = location)
-                        timeline.add(moment)
+                        val moment = mergeIfPossible(timeline, CellMoment(elapsed(), location = location))
                         updateListener?.invoke(moment)
                     }
                 }
@@ -94,8 +131,7 @@ object TelephonyRecorder {
                 } else {
                     timer = timer("neighboring daemon", period = 1500L) {
                         val infos = method.call(manager) as List<NeighboringCellInfo>? ?: return@timer
-                        val moment = CellMoment(elapsed(), neighboring = infos)
-                        timeline.add(moment)
+                        val moment = mergeIfPossible(timeline, CellMoment(elapsed(), neighboring = infos))
                         updateListener?.invoke(moment)
                     }
                 }
@@ -119,7 +155,7 @@ object TelephonyRecorder {
 
             override fun summarize(): CellTimeline {
                 cancel()
-                return CellTimeline(NanoIdUtils.randomNanoId(), timeline)
+                return CellTimeline(NanoIdUtils.randomNanoId(), null, start, timeline)
             }
         }
     }
@@ -139,7 +175,7 @@ object TelephonyRecorder {
         }
 
         override fun summarize(): CellTimeline {
-            return CellTimeline(NanoIdUtils.randomNanoId(), emptyList())
+            return CellTimeline(NanoIdUtils.randomNanoId(), null, 0L, emptyList())
         }
     }
 }

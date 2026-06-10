@@ -7,6 +7,8 @@ import com.zhufucdev.motion_emulator.data.Motions
 import com.zhufucdev.motion_emulator.data.Traces
 import com.zhufucdev.motion_emulator.extension.StoredBox
 import kotlinx.serialization.Serializable
+import java.io.OutputStream
+import java.text.DateFormat
 
 @Serializable
 data class EmulationRef(
@@ -18,13 +20,19 @@ data class EmulationRef(
     val velocity: Double,
     val repeat: Int,
     val satelliteCount: Int,
-) : Data
+) : Data {
+    override fun getDisplayName(format: DateFormat): String = name
+    override fun writeTo(stream: OutputStream) {}
+}
 
-fun EmulationRef.emulation() = Emulation(
-    trace = StoredBox(trace, Traces),
-    motion = StoredBox(motion, Motions),
-    cells = StoredBox(cells, Telephonies),
-    repeat = repeat,
-    velocity = velocity,
-    satelliteCount = satelliteCount
-)
+fun EmulationRef.emulation(): Emulation? {
+    val t = Traces[trace]?.value ?: return null
+    return Emulation(
+        t,
+        StoredBox(motion, Motions),
+        StoredBox(cells, Telephonies),
+        velocity,
+        repeat,
+        satelliteCount
+    )
+}

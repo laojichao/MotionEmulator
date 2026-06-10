@@ -38,6 +38,41 @@
                 android:exported="false"
                 android:label="@string/title_activity_updater"
                 android:theme="@style/Theme.MotionEmulator" />
+        <activity
+                android:name=".ui.SettingsActivity"
+                android:exported="false"
+                android:label="@string/title_activity_settings"
+                android:theme="@style/Theme.MotionEmulator" />
+        <activity
+                android:name=".ui.EmulateActivity"
+                android:exported="false"
+                android:label="@string/title_emulate"
+                android:theme="@style/Theme.MotionEmulator" />
+        <activity
+                android:name=".ui.RecordActivity"
+                android:exported="false"
+                android:label="@string/title_activity_record"
+                android:theme="@style/Theme.MotionEmulator" />
+        <activity
+                android:name=".ui.TraceDrawingActivity"
+                android:exported="false"
+                android:label="@string/title_draw_trace"
+                android:theme="@style/Theme.MotionEmulator" />
+        <activity
+                android:name=".ui.ManagerActivity"
+                android:exported="false"
+                android:label="@string/title_manage"
+                android:theme="@style/Theme.MotionEmulator" />
+        <activity
+                android:name=".ui.PluginActivity"
+                android:exported="false"
+                android:label="@string/title_activity_plugin"
+                android:theme="@style/Theme.MotionEmulator" />
+        <activity
+                android:name=".ui.MapPendingActivity"
+                android:exported="false"
+                android:label="@string/title_activity_map_pending"
+                android:theme="@style/Theme.MotionEmulator" />
 
         <receiver
                 android:name=".provider.EmulationMonitorReceiver"

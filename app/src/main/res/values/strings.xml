@@ -110,6 +110,7 @@
     <string name="caption_insert_formula">Insert formula</string>
     <string name="name_x" translatable="false">x</string>
     <string name="name_y" translatable="false">y</string>
+    <string name="name_z" translatable="false">z</string>
     <string name="name_ratio_x">ratio x</string>
     <string name="name_ratio_y">ratio y</string>
     <string name="name_radian">radian</string>
