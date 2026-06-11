@@ -102,7 +102,6 @@ fun estimateSpeed(motion: Motion): Double? {
                 val previous = (last.data[19] as? FloatArray)?.firstOrNull() ?: continue
                 total += (current - previous).toDouble() * 1.2 / (moment.elapsed - last.elapsed).toDouble()
                 count++
-                last = moment
             }
         }
         return if (total < 0 || total.isNaN() || count <= 0) null else total / count.toDouble()
@@ -117,7 +116,6 @@ fun estimateSpeed(motion: Motion): Double? {
             } else {
                 total += 1.2 / (moment.elapsed - last.elapsed).toDouble()
                 count++
-                last = moment
             }
         }
         return if (total < 0 || total.isNaN() || count <= 0) null else total / count.toDouble()

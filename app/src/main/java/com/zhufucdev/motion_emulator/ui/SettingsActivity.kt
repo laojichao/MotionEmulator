@@ -155,7 +155,7 @@ class SettingsActivity : AppCompatActivity(),
             providerPort.setOnPreferenceChangeListener { _, newValue ->
                 val port = newValue.toString().toIntOrNull()
                 val valid = port != null && isValidPort(port)
-                changed = changed || !valid
+                changed = changed || valid
                 valid
             }
         }

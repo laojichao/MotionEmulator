@@ -45,7 +45,7 @@ fun generateSelfSignedKeyStore(
 
     // generate certificates
     val startDate = Date()
-    val expiryDate = Date(startDate.time + 365 * 24 * 60 * 1000L)
+    val expiryDate = Date(startDate.time + 525600000L)
     val dn = X500Name("CN=Whoever")
     val pubKeyInfo = SubjectPublicKeyInfo.getInstance(pubKey.encoded)
     val digCalc = BcDigestCalculatorProvider().get(AlgorithmIdentifier(OIWObjectIdentifiers.idSHA1))

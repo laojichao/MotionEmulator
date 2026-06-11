@@ -296,7 +296,7 @@ object Scheduler {
     fun stop(context: Context) {
         Plugins.notifyStop(context)
         notifyAll(AgentState.NOT_JOINED)
-        server.stop()
+        server.stop(0L, 0L)
         serverRunning = false
     }
 }
