@@ -161,8 +161,8 @@ fun estimateSpeed(motion: Motion): Double? {
             } else {
                 total += 1.2 / (moment.elapsed - last.elapsed).toDouble()
                 count++
+                last = moment
             }
-            last = moment
         }
         return if (total < 0 || total.isNaN() || count <= 0) null else total / count.toDouble()
     }

@@ -94,7 +94,7 @@ class TraceDrawingActivity : AppCompatActivity() {
             else -> return false
         }
         controller.displayStyle = style
-        return binding.mapUnified.controller != null
+        return true
     }
 
     override fun onRequestPermissionsResult(

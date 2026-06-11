@@ -38,6 +38,7 @@ class RecordDataFragment : Fragment() {
     private var telephony: TelephonyRecordCallback? = null
     private lateinit var types: ArrayList<Int>
     private var useTelephony = false
+    private var summarized = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,11 +67,14 @@ class RecordDataFragment : Fragment() {
         }
 
         fab.setOnClickListener {
-            val motionResult = motion.summarize()
-            Motions.store(motionResult)
-            if (useTelephony) {
-                val cellTimeline = telephony!!.summarize()
-                Cells.store(cellTimeline)
+            if (!summarized) {
+                summarized = true
+                val motionResult = motion.summarize()
+                Motions.store(motionResult)
+                if (useTelephony) {
+                    val cellTimeline = telephony!!.summarize()
+                    Cells.store(cellTimeline)
+                }
             }
             requireActivity().finish()
         }
@@ -80,7 +84,10 @@ class RecordDataFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        motion.summarize()
+        if (!summarized) {
+            summarized = true
+            motion.summarize()
+        }
     }
 
     private fun generateChart(type: Int): View {
@@ -149,7 +156,7 @@ class RecordDataFragment : Fragment() {
     }
 
     private fun telephonyChart(): View {
-        if (Build.VERSION.SDK_INT >= 30) {
+        if (Build.VERSION.SDK_INT >= 28) {
             val container = LinearLayoutCompat(requireContext()).apply {
                 orientation = LinearLayoutCompat.VERTICAL
             }

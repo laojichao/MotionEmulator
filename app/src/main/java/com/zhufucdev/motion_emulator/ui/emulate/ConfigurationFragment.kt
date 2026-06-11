@@ -258,7 +258,6 @@ class ConfigurationFragment : Fragment(), MenuProvider {
                 this@ConfigurationFragment.repeatCount = if (s.isNullOrEmpty()) null
                 else s.toString().toIntOrNull()
                 setError(binding.inputRepeatCount, this@ConfigurationFragment.repeatCount, true)
-                notifyContinue()
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -269,7 +268,6 @@ class ConfigurationFragment : Fragment(), MenuProvider {
                 this@ConfigurationFragment.satelliteCount = if (s.isNullOrEmpty()) null
                 else s.toString().toIntOrNull()
                 setError(binding.inputSatellite, this@ConfigurationFragment.satelliteCount, false)
-                notifyContinue()
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}

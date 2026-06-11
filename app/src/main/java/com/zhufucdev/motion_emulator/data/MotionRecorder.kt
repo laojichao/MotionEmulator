@@ -120,6 +120,10 @@ object MotionRecorder {
                 val moment = MotionMoment(elapsed, data)
                 moments.add(moment)
                 typedListeners[event.sensor.type]?.invoke(moment)
+                // 单传感器情况下，立即触发通用回调
+                if (sensorCount == 1) {
+                    callbackListener?.invoke(moment)
+                }
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
