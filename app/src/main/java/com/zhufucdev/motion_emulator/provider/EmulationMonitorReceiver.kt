@@ -19,4 +19,4 @@ class EmulationMonitorReceiver : BroadcastReceiver() {
 }
 
 const val INTENT_ACTION_DETERMINE = "com.zhufucdev.motion_emulator.ACTION_DETERMINE"
-const val WORK_NAME_MONITOR = "com.zhufucdev.motion_emulator.monitor"
+const val WORK_NAME_MONITOR = "emulationMonitor"

@@ -226,7 +226,7 @@ fun toFixed(value: Float, n: Int): String {
     }
     val format = DecimalFormat(pattern)
     format.roundingMode = RoundingMode.HALF_UP
-    return format.format(value.toDouble())
+    return format.format(value)
 }
 
 /**

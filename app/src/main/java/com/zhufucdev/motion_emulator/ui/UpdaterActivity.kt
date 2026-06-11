@@ -3,7 +3,6 @@ package com.zhufucdev.motion_emulator.ui
 import android.annotation.SuppressLint
 import androidx.compose.runtime.Composable
 import com.zhufucdev.motion_emulator.extension.UPDATE_FILE_PROVIDER_AUTHORITY
-import com.zhufucdev.motion_emulator.extension.AppUpdater
 import com.zhufucdev.motion_emulator.ui.theme.MotionEmulatorTheme
 import com.zhufucdev.update.Updater
 import com.zhufucdev.update.ui.AbstractUpdaterActivity
@@ -18,7 +17,7 @@ class UpdaterActivity : AbstractUpdaterActivity() {
     }
 
     override val updater: Updater
-        get() = AppUpdater(this)
+        get() = com.zhufucdev.motion_emulator.extension.Updater(this)
 
     override val fileProviderAuthority: String
         get() = UPDATE_FILE_PROVIDER_AUTHORITY

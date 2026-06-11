@@ -104,7 +104,7 @@ object MotionRecorder {
                     if (Math.abs(lastMoment.elapsed - elapsed) < 0.05f
                         && !lastMoment.data.containsKey(event.sensor.type)
                     ) {
-                        lastMoment.data[event.sensor.type] = event.values.clone()
+                        lastMoment.data[event.sensor.type] = event.values
                         typedListeners[event.sensor.type]?.invoke(lastMoment)
                         // 当所有传感器类型都有数据时，触发通用回调
                         if (lastMoment.data.size == sensorCount) {
@@ -120,10 +120,6 @@ object MotionRecorder {
                 val moment = MotionMoment(elapsed, data)
                 moments.add(moment)
                 typedListeners[event.sensor.type]?.invoke(moment)
-                // 单传感器情况下，立即触发通用回调
-                if (sensorCount == 1) {
-                    callbackListener?.invoke(moment)
-                }
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}

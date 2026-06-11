@@ -17,7 +17,7 @@ import com.zhufucdev.me.stub.Data
 import com.zhufucdev.motion_emulator.data.Emulations
 import com.zhufucdev.motion_emulator.data.Motions
 import com.zhufucdev.motion_emulator.data.Traces
-import com.zhufucdev.motion_emulator.extension.AppUpdater
+import com.zhufucdev.motion_emulator.extension.Updater
 import com.zhufucdev.motion_emulator.extension.defaultKtorClient
 import com.zhufucdev.motion_emulator.extension.setUpStatusBar
 import com.zhufucdev.motion_emulator.plugin.Plugins
@@ -41,7 +41,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MotionEmulatorTheme {
                 val updater = remember {
-                    AppUpdater(this)
+                    Updater(this)
                 }
                 LaunchedEffect(Unit) {
                     updater.check()
@@ -55,7 +55,7 @@ class MainActivity : ComponentActivity() {
     override val defaultViewModelProviderFactory: ViewModelProvider.Factory = viewModelFactory {
         initializer {
             AppViewModel(
-                updater = AppUpdater(this@MainActivity)
+                updater = Updater(this@MainActivity)
             )
         }
 
