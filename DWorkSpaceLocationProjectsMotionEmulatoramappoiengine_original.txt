@@ -38,7 +38,7 @@ class AMapPoiEngine(private val context: Context) : PoiSearchEngine {
     override suspend fun search(point: Point): Poi? {
         val response = defaultKtorClient.get("https://restapi.amap.com/v3/geocode/regeo") {
             parameter("key", "0f605c48cca0e070f2342f4ba7af4b18")
-            parameter("location", "${point.longitude.toFixed(6)},${point.latitude.toFixed(6)}")
+            parameter("location", "${point.longitude.toFloat().toFixed(6)},${point.latitude.toFloat().toFixed(6)}")
         }
         if (response.status.value !in 200..299) return null
         val res = response.body<JsonObject>()

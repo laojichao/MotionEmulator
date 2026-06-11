@@ -144,7 +144,7 @@ class ConfigurationFragment : Fragment(), MenuProvider {
     private suspend fun initTracesDropdown() {
         val adapter = ArrayAdapter<String>(requireContext(), android.R.layout.simple_dropdown_item_1line)
         val traces = Traces.list()
-        traces.forEach { adapter.add(it.name ?: it.id) }
+        traces.forEach { adapter.add(it.name) }
 
         val dropdown = binding.dropdownTrace
         dropdown.setOnItemClickListener { _, _, position, _ ->
@@ -157,7 +157,7 @@ class ConfigurationFragment : Fragment(), MenuProvider {
         defaultConfig?.trace?.let { id ->
             val trace = traces.find { it.id == id }
             if (trace != null) {
-                select(dropdown, adapter, trace.name ?: trace.id)
+                select(dropdown, adapter, trace.name)
                 selectTrace(trace)
             }
         }

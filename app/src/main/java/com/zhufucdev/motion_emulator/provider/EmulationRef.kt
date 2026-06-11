@@ -17,10 +17,10 @@ import kotlinx.serialization.Serializable
  */
 @Serializable
 data class EmulationRef(
-    val trace: String = "",
-    val motion: String = "",
-    val cells: String = "",
-    val velocity: Double = 0.0,
-    val repeat: Int = 0,
-    val satelliteCount: Int = 0
+    val trace: String,
+    val motion: String,
+    val cells: String,
+    val velocity: Double,
+    val repeat: Int,
+    val satelliteCount: Int
 )

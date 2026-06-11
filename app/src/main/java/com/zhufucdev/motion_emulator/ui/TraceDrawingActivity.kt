@@ -86,15 +86,17 @@ class TraceDrawingActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val controller = binding.mapUnified.controller ?: return false
-        val style = when (item.itemId) {
-            R.id.app_bar_type_common -> MapStyle.NORMAL
-            R.id.app_bar_type_night -> MapStyle.NIGHT
-            R.id.app_bar_type_satellite -> MapStyle.SATELLITE
-            else -> return false
+        val controller = binding.mapUnified.controller
+        if (controller != null) {
+            val style = when (item.itemId) {
+                R.id.app_bar_type_common -> MapStyle.NORMAL
+                R.id.app_bar_type_night -> MapStyle.NIGHT
+                R.id.app_bar_type_satellite -> MapStyle.SATELLITE
+                else -> return false
+            }
+            controller.displayStyle = style
         }
-        controller.displayStyle = style
-        return true
+        return binding.mapUnified.controller != null
     }
 
     override fun onRequestPermissionsResult(
@@ -173,8 +175,8 @@ class TraceDrawingActivity : AppCompatActivity() {
                 val results = lastResults ?: return false
                 val poi = results[position]
                 val point = poi.location ?: return false
-                searchView.setQuery("", false)
                 searchView.isIconified = true
+                searchView.onActionViewCollapsed()
                 lifecycleScope.launch {
                     val controller = binding.mapUnified.requireController()
                     controller.moveCamera(point, true, true)

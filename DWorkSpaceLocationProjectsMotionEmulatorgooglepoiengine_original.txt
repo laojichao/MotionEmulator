@@ -7,8 +7,23 @@ import android.os.Build
 import com.zhufucdev.me.stub.Point
 import kotlinx.coroutines.suspendCancellableCoroutine
 
+/**
+ * Google Maps POI 搜索引擎
+ *
+ * 使用 Android Geocoder API 实现 POI 搜索功能，支持：
+ * - 坐标反向查询（坐标转地址）
+ * - 文本搜索（关键词搜索 POI）
+ *
+ * @param context Android Context
+ */
 class GooglePoiEngine(private val context: Context) : PoiSearchEngine {
 
+    /**
+     * 将 Address 转换为 Poi
+     *
+     * @param address Android 地址对象
+     * @return 对应的 [Poi]
+     */
     private fun poi(address: Address): Poi {
         val city = address.subAdminArea ?: address.getAddressLine(0) ?: ""
         val province = address.adminArea ?: ""
@@ -16,8 +31,16 @@ class GooglePoiEngine(private val context: Context) : PoiSearchEngine {
         return Poi(city, province, name, Point(address.latitude, address.longitude))
     }
 
+    /**
+     * 根据坐标搜索 POI
+     *
+     * 使用 Geocoder 反向地理编码
+     *
+     * @param point 地理坐标
+     * @return 对应的 [Poi]，如果未找到则返回 null
+     */
     override suspend fun search(point: Point): Poi? {
-        if (!Geocoder.isPresent()) throw IllegalStateException("Geocoder not present")
+        if (!Geocoder.isPresent()) return null
         val geocoder = Geocoder(context)
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             suspendCancellableCoroutine { cont ->
@@ -31,8 +54,17 @@ class GooglePoiEngine(private val context: Context) : PoiSearchEngine {
         }
     }
 
+    /**
+     * 根据文本搜索 POI 列表
+     *
+     * 使用 Geocoder 文本搜索
+     *
+     * @param text 搜索关键词
+     * @param limit 最大返回数量
+     * @return 匹配的 [Poi] 列表
+     */
     override suspend fun search(text: String, limit: Int): List<Poi> {
-        if (!Geocoder.isPresent()) throw IllegalStateException("Geocoder not present")
+        if (!Geocoder.isPresent()) return emptyList()
         val geocoder = Geocoder(context)
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             suspendCancellableCoroutine { cont ->

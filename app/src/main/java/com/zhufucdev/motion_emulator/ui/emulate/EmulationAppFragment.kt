@@ -16,6 +16,7 @@ import com.zhufucdev.motion_emulator.ui.map.MapController
 import com.zhufucdev.me.stub.AgentState
 import com.zhufucdev.me.stub.EmulationInfo
 import com.zhufucdev.me.stub.android
+import kotlin.NotImplementedError
 import kotlin.math.roundToInt
 
 class EmulationAppFragment : EmulationMonitoringFragment() {
@@ -77,9 +78,9 @@ class EmulationAppFragment : EmulationMonitoringFragment() {
                 notifyStarted(info)
             }
             AgentState.CANCELED -> notifyStopped(R.string.title_emulation_canceled)
+            AgentState.PAUSED -> throw NotImplementedError()
             AgentState.COMPLETED -> notifyStopped(R.string.title_emulation_completed)
             AgentState.FAILURE -> notifyStopped(R.string.title_emulation_failure)
-            else -> notifyStopped(R.string.title_emulation_canceled)
         }
     }
 
@@ -154,8 +155,9 @@ class EmulationAppFragment : EmulationMonitoringFragment() {
     }
 
     private fun notifyProgress(progress: Float) {
-        binding.progressEmulation.progress =
-            (binding.progressEmulation.max * progress).roundToInt()
+        binding.progressEmulation.setProgress(
+            (binding.progressEmulation.max * progress).roundToInt(), true
+        )
     }
 
     private fun notifyTime(remaining: Double) {

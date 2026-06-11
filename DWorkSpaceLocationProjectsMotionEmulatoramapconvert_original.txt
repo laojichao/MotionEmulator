@@ -4,6 +4,7 @@ import android.content.Context
 import com.amap.api.maps.MapsInitializer
 import com.amap.api.maps.model.LatLng
 import com.amap.api.services.core.LatLonPoint
+import com.zhufucdev.motion_emulator.BuildConfig
 import com.zhufucdev.motion_emulator.data.AMapProjector
 import com.zhufucdev.me.stub.*
 import io.ktor.client.call.*
@@ -39,7 +40,7 @@ operator fun LatLng.minus(other: LatLng) =
  */
 suspend fun getAddressWithAmap(location: LatLng): String? {
     val req = defaultKtorClient.get("https://restapi.amap.com/v3/geocode/regeo") {
-        parameter("key", "0f605c48cca0e070f2342f4ba7af4b18")
+        parameter("key", BuildConfig.amapwebkey)
         parameter("location", "${location.longitude.toFixed(6)},${location.latitude.toFixed(6)}")
     }
     if (!req.status.isSuccess()) return null

@@ -50,7 +50,6 @@ class AMapController(private val aMap: AMap, context: Context) : MapController(c
     init {
         aMap.isMyLocationEnabled = false
         aMap.uiSettings.isZoomControlsEnabled = false
-        aMap.isMyLocationEnabled = false
         val resources = context.resources
         if (isDarkModeEnabled(resources)) {
             aMap.mapType = 3
@@ -58,19 +57,6 @@ class AMapController(private val aMap: AMap, context: Context) : MapController(c
         } else {
             displayStyle = MapStyle.NORMAL
         }
-        var zoom = aMap.cameraPosition.zoom
-        aMap.addOnCameraChangeListener(object : AMap.OnCameraChangeListener {
-            override fun onCameraChange(cam: CameraPosition) {
-                val indicator = locationIndicator ?: return
-                if (aMap.cameraPosition.zoom != zoom) {
-                    zoom = cam.zoom
-                    val center = indicator.center
-                    redrawLocationIndicator(center)
-                }
-            }
-
-            override fun onCameraChangeFinish(cam: CameraPosition) {}
-        })
         displayType = MapDisplayType.INTERACTIVE
     }
 
@@ -78,8 +64,6 @@ class AMapController(private val aMap: AMap, context: Context) : MapController(c
     private val indicatorStroke: Int
         get() = if (aMap.mapType == 1) Color.rgb(55, 71, 79) else Color.rgb(250, 250, 250)
     private val lineColor: Int get() = getAttrColor(com.google.android.material.R.attr.colorTertiary, context)
-
-    private fun distance(p1: LatLng, p2: LatLng): Float = AMapUtils.calculateLineDistance(p1, p2)
 
     override fun boundCamera(bounds: TraceBounds, animate: Boolean) {
         val update = CameraUpdateFactory.newLatLngBounds(bounds.amap(context), 400)
@@ -146,7 +130,6 @@ class AMapController(private val aMap: AMap, context: Context) : MapController(c
         var lastPolyline: Polyline? = null
         var lastPos = LatLng(0.0, 0.0)
         val backStack = ArrayList<ArrayList<LatLng>>()
-        val points by lazy(lastPos) { polyline.points.map { it.toPoint() } }
 
         return object : MapScrawl {
             override var element: Boolean = false
@@ -157,7 +140,7 @@ class AMapController(private val aMap: AMap, context: Context) : MapController(c
 
             override fun addPoint(point: Point) {
                 val latLng = point.ensureAmapCoordinate(context).toAmapLatLng()
-                if (distance(lastPos, latLng) >= 0.5f) {
+                if (AMapUtils.calculateLineDistance(lastPos, latLng) >= 0.5f) {
                     polyline.add(latLng)
                     backStack.lastOrNull()?.add(latLng)
                     lastPolyline?.remove()
@@ -166,7 +149,9 @@ class AMapController(private val aMap: AMap, context: Context) : MapController(c
                 lastPos = latLng
             }
 
-            override fun getPoints(): List<Point> = points
+            override fun getPoints(): List<Point> {
+                return polyline.points.map { it.toPoint() }
+            }
 
             override fun undo() {
                 val last = backStack.removeLastOrNull() ?: return

@@ -16,16 +16,7 @@ import com.zhufucdev.me.stub.Point
 import com.zhufucdev.me.stub.Trace
 
 class GoogleMapsController(context: Context, private val gMap: GoogleMap) : MapController(context) {
-    private val locationIndicator: ((Location) -> Unit) by lazy {
-        var listener: LocationSource.OnLocationChangedListener? = null
-        gMap.setLocationSource(object : LocationSource {
-            override fun activate(p0: LocationSource.OnLocationChangedListener) { listener = p0 }
-            override fun deactivate() { listener = null }
-        })
-        gMap.isMyLocationEnabled = true
-        gMap.uiSettings.isMyLocationButtonEnabled = false
-        { loc -> listener?.onLocationChanged(loc) }
-    }
+    private var locationIndicator: ((Location) -> Unit)? = null
 
     override var displayStyle: MapStyle = MapStyle.NORMAL
         set(value) {
@@ -67,13 +58,20 @@ class GoogleMapsController(context: Context, private val gMap: GoogleMap) : MapC
 
     private val lineColor: Int get() = getAttrColor(com.google.android.material.R.attr.colorTertiary, context)
 
-    fun distance(a: LatLng, b: LatLng): Double = SphericalUtil.computeDistanceBetween(a, b)
-
     init {
         displayStyle = if (isDarkModeEnabled(context.resources)) MapStyle.NIGHT else MapStyle.NORMAL
         gMap.isMyLocationEnabled = false
         gMap.uiSettings.isZoomControlsEnabled = false
-        displayStyle = MapStyle.NORMAL
+
+        // Setup location indicator via LocationSource
+        var listener: LocationSource.OnLocationChangedListener? = null
+        gMap.setLocationSource(object : LocationSource {
+            override fun activate(p0: LocationSource.OnLocationChangedListener) { listener = p0 }
+            override fun deactivate() { listener = null }
+        })
+        gMap.isMyLocationEnabled = true
+        gMap.uiSettings.isMyLocationButtonEnabled = false
+        locationIndicator = { loc -> listener?.onLocationChanged(loc) }
         displayType = MapDisplayType.INTERACTIVE
     }
 
@@ -112,7 +110,7 @@ class GoogleMapsController(context: Context, private val gMap: GoogleMap) : MapC
     }
 
     override fun updateLocationIndicator(location: Location) {
-        locationIndicator.invoke(location)
+        locationIndicator?.invoke(location)
     }
 
     override fun usePen(): MapScrawl {
@@ -120,7 +118,6 @@ class GoogleMapsController(context: Context, private val gMap: GoogleMap) : MapC
         var lastPolyline: Polyline? = null
         var lastPos = LatLng(0.0, 0.0)
         val backStack = ArrayList<ArrayList<LatLng>>()
-        val points by lazy(lastPos) { polyline.points.map { it.toPoint() } }
 
         return object : MapScrawl {
             override var element: Boolean = false
@@ -129,7 +126,7 @@ class GoogleMapsController(context: Context, private val gMap: GoogleMap) : MapC
 
             override fun addPoint(point: Point) {
                 val latLng = point.ensureGoogleCoordinate().toGoogleLatLng()
-                if (distance(lastPos, latLng) >= 0.5) {
+                if (SphericalUtil.computeDistanceBetween(lastPos, latLng) >= 0.5) {
                     polyline.add(latLng)
                     backStack.lastOrNull()?.add(latLng)
                     lastPolyline?.remove()
@@ -138,7 +135,7 @@ class GoogleMapsController(context: Context, private val gMap: GoogleMap) : MapC
                 lastPos = latLng
             }
 
-            override fun getPoints(): List<Point> = points
+            override fun getPoints(): List<Point> = polyline.points.map { it.toPoint() }
 
             override fun undo() {
                 val last = backStack.removeLastOrNull() ?: return
