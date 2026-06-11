@@ -7,7 +7,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.serializer
 import java.io.OutputStream
 import java.text.DateFormat
-import kotlin.reflect.KClass
 
 /**
  * 电话数据存储（单例）
@@ -21,7 +20,6 @@ import kotlin.reflect.KClass
  */
 object Telephonies : DataStore<CellTimeline>() {
     override val typeName: String get() = "telephony"
-    override val clazz: KClass<CellTimeline> = CellTimeline::class
     override val dataSerializer: KSerializer<CellTimeline> = serializer()
 }
 
@@ -37,7 +35,6 @@ object Telephonies : DataStore<CellTimeline>() {
 object TelephonyComposites : DataStore<TelephonyComposite>() {
     override val typeName: String
         get() = "telephony_composite"
-    override val clazz: KClass<TelephonyComposite> get() = TelephonyComposite::class
     override val dataSerializer: KSerializer<TelephonyComposite> = serializer()
 }
 

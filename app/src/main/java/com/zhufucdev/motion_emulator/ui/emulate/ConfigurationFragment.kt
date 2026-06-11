@@ -144,12 +144,12 @@ class ConfigurationFragment : Fragment(), MenuProvider {
     private suspend fun initTracesDropdown() {
         val adapter = ArrayAdapter<String>(requireContext(), android.R.layout.simple_dropdown_item_1line)
         val traces = Traces.list()
-        traces.forEach { adapter.add(it.value.name ?: it.value.id) }
+        traces.forEach { adapter.add(it.name ?: it.id) }
 
         val dropdown = binding.dropdownTrace
         dropdown.setOnItemClickListener { _, _, position, _ ->
             lifecycleScope.launch {
-                selectTrace(traces[position].value)
+                selectTrace(traces[position])
             }
         }
         dropdown.setAdapter(adapter)
@@ -157,8 +157,8 @@ class ConfigurationFragment : Fragment(), MenuProvider {
         defaultConfig?.trace?.let { id ->
             val trace = traces.find { it.id == id }
             if (trace != null) {
-                select(dropdown, adapter, trace.value.name ?: trace.value.id)
-                selectTrace(trace.value)
+                select(dropdown, adapter, trace.name ?: trace.id)
+                selectTrace(trace)
             }
         }
     }
@@ -166,13 +166,13 @@ class ConfigurationFragment : Fragment(), MenuProvider {
     private fun initMotionDropdown() {
         val adapter = ArrayAdapter<String>(requireContext(), android.R.layout.simple_dropdown_item_1line)
         val motions = Motions.list()
-        motions.forEach { adapter.add(it.value.getDisplayName(dateFormat)) }
+        motions.forEach { adapter.add(it.getDisplayName(dateFormat)) }
         addDefaults(adapter)
 
         val dropdown = binding.dropdownMotion
         dropdown.setOnItemClickListener { _, _, position, _ ->
             this.motion = if (position < motions.size) {
-                box(motions[position].value)
+                box(motions[position])
             } else if (position == motions.size) {
                 EmptyBox()
             } else {
@@ -188,8 +188,8 @@ class ConfigurationFragment : Fragment(), MenuProvider {
         } else {
             if (!selectDefaults(dropdown, adapter, id)) {
                 motions.find { it.id == id }?.let {
-                    select(dropdown, adapter, it.value.getDisplayName(dateFormat))
-                    this.motion = box(it.value)
+                    select(dropdown, adapter, it.getDisplayName(dateFormat))
+                    this.motion = box(it)
                 }
             }
         }
@@ -198,13 +198,13 @@ class ConfigurationFragment : Fragment(), MenuProvider {
     private fun initCellsDropdown() {
         val adapter = ArrayAdapter<String>(requireContext(), android.R.layout.simple_dropdown_item_1line)
         val timelines = Cells.list()
-        timelines.forEach { adapter.add(it.value.getDisplayName(dateFormat)) }
+        timelines.forEach { adapter.add(it.getDisplayName(dateFormat)) }
         addDefaults(adapter)
 
         val dropdown = binding.dropdownCells
         dropdown.setOnItemClickListener { _, _, position, _ ->
             this.cells = if (position < timelines.size) {
-                box(timelines[position].value)
+                box(timelines[position])
             } else if (position == timelines.size) {
                 EmptyBox()
             } else {
@@ -220,8 +220,8 @@ class ConfigurationFragment : Fragment(), MenuProvider {
         } else {
             if (!selectDefaults(dropdown, adapter, id)) {
                 timelines.find { it.id == id }?.let {
-                    select(dropdown, adapter, it.value.getDisplayName(dateFormat))
-                    this.cells = box(it.value)
+                    select(dropdown, adapter, it.getDisplayName(dateFormat))
+                    this.cells = box(it)
                 }
             }
         }

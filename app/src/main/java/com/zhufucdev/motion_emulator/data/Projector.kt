@@ -9,7 +9,6 @@ import com.zhufucdev.me.stub.Projector
 import com.zhufucdev.me.stub.Vector2D
 import com.zhufucdev.me.stub.lenTo
 import com.zhufucdev.motion_emulator.extension.toAmapLatLng
-import com.zhufucdev.motion_emulator.ui.FactorCanvas
 import kotlin.math.pow
 import kotlin.math.sqrt
 

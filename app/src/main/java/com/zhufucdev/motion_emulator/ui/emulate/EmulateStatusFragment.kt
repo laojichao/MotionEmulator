@@ -78,7 +78,7 @@ class EmulateStatusFragment : Fragment() {
         val controller = binding.mapMotionPreview.requireController()
         val targetTrace = arguments?.getString("target_trace")
         if (targetTrace != null) {
-            val trace = Traces[targetTrace]?.value
+            val trace = Traces[targetTrace]
             if (trace != null) {
                 previousTrace?.remove()
                 previousTrace = controller.drawTrace(trace)

@@ -57,7 +57,7 @@ fun EmulateHome(paddingValues: PaddingValues) {
         } else {
             LazyColumn {
                 items(model.configs) {
-                    EmulationItem(it.value)
+                    EmulationItem(it)
                 }
             }
         }

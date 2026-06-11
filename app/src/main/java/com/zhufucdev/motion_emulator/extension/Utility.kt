@@ -2,16 +2,13 @@ package com.zhufucdev.motion_emulator.extension
 
 import android.app.Activity
 import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.location.Location
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.WindowCompat
-import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
-import androidx.preference.PreferenceManager
 import com.google.android.material.appbar.AppBarLayout
 import com.zhufucdev.motion_emulator.provider.EmulationRef
 import com.zhufucdev.me.stub.BlockBox
@@ -26,9 +23,7 @@ import com.zhufucdev.me.stub.Point
 import java.math.RoundingMode
 import java.text.DateFormat
 import java.text.DecimalFormat
-import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -76,45 +71,6 @@ fun adjustToolbarMarginForNotch(activity: Activity, appBarLayout: AppBarLayout) 
                 appBarLayout.setPadding(0, displayCutout.safeInsetTop, 0, 0)
             }
         }
-    }
-}
-
-/**
- * 将时间戳格式化为字符串
- *
- * @param dateFormat 日期格式化器
- * @param time 时间戳（毫秒），默认为当前时间
- * @return 格式化后的日期字符串
- */
-fun dateString(dateFormat: DateFormat, time: Long = System.currentTimeMillis()): String {
-    return dateFormat.format(Date(time))
-}
-
-/**
- * 从 Context 获取有效的时间格式
- *
- * 读取用户偏好设置中的时间格式配置，如果用户启用了自定义格式则使用之，
- * 否则使用系统默认的日期时间格式
- *
- * @param context Android Context
- * @return 配置好的 [DateFormat] 实例
- */
-fun effectiveTimeFormat(context: Context): DateFormat {
-    val preferences by lazySharedPreferences(context)
-    return effectiveTimeFormat(preferences)
-}
-
-/**
- * 从 SharedPreferences 获取有效的时间格式
- *
- * @param preferences SharedPreferences 实例
- * @return 配置好的 [DateFormat] 实例
- */
-fun effectiveTimeFormat(preferences: SharedPreferences): DateFormat {
-    return if (preferences.getBoolean("customize_time_format", false)) {
-        SimpleDateFormat(preferences.getString("time_format", "dd-MM-yyyy hh:mm:ss"), Locale.getDefault())
-    } else {
-        SimpleDateFormat.getDateTimeInstance()
     }
 }
 
@@ -205,28 +161,6 @@ fun initializeToolbar(activity: AppCompatActivity, toolbar: Toolbar, navControll
 }
 
 /**
- * 创建懒加载的 SharedPreferences 实例（基于 Context）
- *
- * @param context Android Context
- * @return [Lazy] 委托的 SharedPreferences
- */
-fun lazySharedPreferences(context: Context): Lazy<SharedPreferences> {
-    return lazy { sharedPreferences(context) }
-}
-
-/**
- * 创建懒加载的 SharedPreferences 实例（基于 Fragment）
- *
- * 会在 Fragment 附加到 Activity 后才获取 Context
- *
- * @param fragment Fragment 实例
- * @return [Lazy] 委托的 SharedPreferences
- */
-fun lazySharedPreferences(fragment: Fragment): Lazy<SharedPreferences> {
-    return lazy { sharedPreferences(fragment.requireContext()) }
-}
-
-/**
  * 将 Emulation 转换为 EmulationRef
  *
  * 提取 Emulation 中各组件的引用 ID，用于持久化存储默认配置
@@ -274,16 +208,6 @@ fun setUpStatusBar(activity: Activity) {
     WindowCompat.setDecorFitsSystemWindows(activity.window, false)
     activity.window.statusBarColor = 0
     activity.window.navigationBarColor = 0
-}
-
-/**
- * 获取默认的 SharedPreferences 实例
- *
- * @param context Android Context
- * @return 默认 SharedPreferences
- */
-fun sharedPreferences(context: Context): SharedPreferences {
-    return PreferenceManager.getDefaultSharedPreferences(context)
 }
 
 /**

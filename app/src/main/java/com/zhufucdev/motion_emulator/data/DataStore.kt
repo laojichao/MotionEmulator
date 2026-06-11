@@ -2,43 +2,54 @@ package com.zhufucdev.motion_emulator.data
 
 import android.content.Context
 import com.zhufucdev.me.stub.Data
-import com.zhufucdev.me.stub.Metadata
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.decodeFromStream
-import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.encodeToStream
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.serializer
 import java.io.File
-import java.io.InputStream
-import java.io.OutputStream
-import kotlin.reflect.KClass
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.SortedMap
 
 /**
- * Abstraction of method set to store and read
- * simulation data (or any [Data])
+ * 数据存储抽象基类
+ *
+ * 提供数据的持久化存储、读取、删除等操作。
+ * 数据以 JSON 格式存储在应用的 files 目录下，文件名格式为 `{typeName}_{id}.json`。
+ *
+ * @param T 数据类型，必须实现 [Data] 接口
  */
 abstract class DataStore<T : Data> {
-    private val data = sortedMapOf<String, DataLoader<T>>()
+    private val data: SortedMap<String, T> = sortedMapOf()
     private lateinit var rootDir: File
 
     /**
-     * Files would be saved as [typeName]_[Data.id].json
+     * 数据类型名称，用于文件名前缀
      */
     abstract val typeName: String
-    abstract val clazz: KClass<T>
-    protected abstract val dataSerializer: KSerializer<T>
-
-    private val DataLoader<T>.storeName get() = "${typeName}_${id}.json"
 
     /**
-     * Make sure it works
+     * 数据序列化器
+     */
+    protected abstract val dataSerializer: KSerializer<T>
+
+    /**
+     * 获取数据条目的存储文件名
      *
-     * Should be called before any I/O operation
+     * @param data 数据条目
+     * @return 格式为 `{typeName}_{id}.json` 的文件名
+     */
+    private fun getStoreName(data: Data): String {
+        return "${typeName}_${data.id}.json"
+    }
+
+    /**
+     * 初始化数据存储
+     *
+     * 从文件系统加载所有已存储的数据条目，并移除不再存在的条目。
+     * 必须在任何 I/O 操作之前调用。
+     *
+     * @param context Android Context，用于获取文件目录
      */
     fun require(context: Context) {
         rootDir = context.filesDir
@@ -46,163 +57,110 @@ abstract class DataStore<T : Data> {
         val files = rootDir.list()
         if (files == null) {
             data.clear()
-        } else {
-            val existingIds = mutableSetOf<String>()
-            files.forEach {
-                val file = File(rootDir, it)
-                if (!it.endsWith("json") || !it.startsWith(typeName))
-                    return@forEach
-                val id = file.nameWithoutExtension.removePrefix("${typeName}_")
-                val metaFile = File(rootDir, "meta_${id}.json")
-                if (!metaFile.exists()) {
-                    return@forEach
+            return
+        }
+
+        val existingIds = mutableListOf<String>()
+        for (fileName in files) {
+            val file = File(rootDir, fileName)
+            if (!fileName.endsWith("json") || !fileName.startsWith(typeName)) continue
+
+            val id = file.nameWithoutExtension.removePrefix("${typeName}_")
+            existingIds.add(id)
+
+            if (!data.containsKey(id)) {
+                try {
+                    val deserialized = FileInputStream(file).use { stream ->
+                        Json.decodeFromStream(dataSerializer, stream)
+                    }
+                    data[deserialized.id] = deserialized
+                } catch (e: Exception) {
+                    // Skip corrupted files
                 }
-                existingIds.add(id)
-                if (data.containsKey(id)) {
-                    return@forEach
-                }
-                data[id] = LazyData(id, clazz, file, metaFile, dataSerializer)
-            }
-            val removed = data.keys.filter { it !in existingIds }
-            removed.forEach {
-                data.remove(it)
             }
         }
+
+        // Remove entries that no longer have files
+        val removed = data.keys.filter { it !in existingIds }
+        removed.forEach { data.remove(it) }
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    fun put(record: DataLoader<T>, overwrite: Boolean = false): DataLoader<T>? {
-        if (data.containsKey(record.id) && !overwrite) return null
+    /**
+     * 存储数据条目
+     *
+     * 将数据写入文件系统并更新内存缓存。如果条目已存在且 [overwrite] 为 false，则跳过。
+     *
+     * @param record 要存储的数据
+     * @param overwrite 是否覆盖已存在的条目
+     */
+    fun store(record: T, overwrite: Boolean = false) {
+        val id = record.id
+        if (data.containsKey(id) && !overwrite) return
 
-        if (record is WorkingData<T>) {
-            val file = File(rootDir, record.storeName)
-            file.outputStream().use {
-                Json.encodeToStream(dataSerializer, record.value, it)
-            }
+        val file = File(rootDir, getStoreName(record))
+        FileOutputStream(file).use { stream ->
+            record.writeTo(stream)
         }
-        data[record.id] = record
-        return record
+        data[id] = record
     }
 
-    fun import(source: InputStream, overwrite: Boolean = false): DataLoader<T>? {
-        val text = source.bufferedReader().use { it.readText() }
-        val element = Json.parseToJsonElement(text).jsonObject
-        if (element.containsKey("value") && element.containsKey("metadata")) {
-            return put(
-                WorkingData(
-                    Json.decodeFromJsonElement(dataSerializer, element["value"]!!),
-                    Json.decodeFromJsonElement(element["metadata"]!!)
-                ),
-                overwrite
-            )
-        } else {
-            throw IllegalArgumentException("source does not contain value and metadata")
+    /**
+     * 解析 JSON 字符串并存储
+     *
+     * @param json JSON 字符串
+     * @param overwrite 是否覆盖已存在的条目
+     * @return 解析后的数据对象
+     */
+    fun parseAndStore(json: String, overwrite: Boolean = false): T {
+        val deserialized = Json.decodeFromString(dataSerializer, json)
+        val id = deserialized.id
+        if (data.containsKey(id) && !overwrite) {
+            return deserialized
         }
+
+        val file = File(rootDir, getStoreName(deserialized))
+        file.writeText(json)
+        data[id] = deserialized
+        return deserialized
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
-    fun export(record: DataLoader<T>, dest: OutputStream) {
-        Json.encodeToStream(
-            buildJsonObject {
-                put("value", Json.encodeToJsonElement(dataSerializer, record.value))
-                put("metadata", Json.encodeToJsonElement(record.metadata))
-            },
-            dest
-        )
-    }
-
-    fun delete(record: DataLoader<T>, context: Context) {
-        context.deleteFile(record.storeName)
+    /**
+     * 删除数据条目
+     *
+     * @param record 要删除的数据
+     * @param context Android Context
+     */
+    fun delete(record: T, context: Context) {
+        context.deleteFile(getStoreName(record))
         data.remove(record.id)
     }
 
-    fun list() = data.values.toList()
-
-    operator fun get(id: String) = data[id]
+    /**
+     * 获取所有数据条目列表
+     *
+     * @return 数据条目列表
+     */
+    fun list(): List<T> = data.values.toList()
 
     /**
-     * 存储原始 Data 对象
+     * 根据 ID 获取数据条目
      *
-     * 将原始 Data 对象包装为 WorkingData 后存储
-     *
-     * @param value 要存储的 Data 对象
-     * @param overwrite 是否覆盖已存在的数据
-     * @return 存储后的 DataLoader，如果已存在且不覆盖则返回 null
+     * @param id 数据条目 ID
+     * @return 数据条目，如果不存在则返回 null
      */
-    fun store(value: T, overwrite: Boolean = false): DataLoader<T>? {
-        return put(WorkingData(value, Metadata()), overwrite)
-    }
+    operator fun get(id: String): T? = data[id]
 
-    override fun equals(other: Any?): Boolean =
-        other is DataStore<*> && other::class == this::class && other.clazz == this.clazz
+    override fun equals(other: Any?): Boolean {
+        return other is DataStore<*> &&
+                other.javaClass == this.javaClass &&
+                other.typeName == this.typeName
+    }
 
     override fun hashCode(): Int {
-        var result = rootDir.hashCode()
+        var result = data.hashCode()
+        result = 31 * result + rootDir.hashCode()
         result = 31 * result + typeName.hashCode()
-        result = 31 * result + clazz.hashCode()
+        result = 31 * result + dataSerializer.hashCode()
         return result
     }
-}
-
-sealed interface DataLoader<T : Data> {
-    val value: T
-    val metadata: Metadata
-    val id: String
-    val clazz: KClass<out T>
-    fun copy(metadata: Metadata): DataLoader<T>
-}
-
-data class WorkingData<T : Data>(
-    override val value: T,
-    override val metadata: Metadata
-) : DataLoader<T> {
-    override val id: String
-        get() = value.id
-    override val clazz
-        get() = value::class
-
-    override fun copy(metadata: Metadata): DataLoader<T> = WorkingData(value, metadata)
-}
-
-data class LazyValueData<T : Data>(
-    override val metadata: Metadata,
-    override val clazz: KClass<out T>,
-    private val file: File,
-    private val serializer: KSerializer<T>
-) : DataLoader<T> {
-    override val id: String
-        get() = value.id
-
-    @OptIn(ExperimentalSerializationApi::class)
-    override val value by lazy {
-        file.inputStream().use { s ->
-            Json.decodeFromStream(serializer, s)
-        }
-    }
-
-    override fun copy(metadata: Metadata): DataLoader<T> =
-        LazyValueData(metadata, clazz, file, serializer)
-}
-
-@OptIn(ExperimentalSerializationApi::class)
-data class LazyData<T : Data>(
-    override val id: String,
-    override val clazz: KClass<out T>,
-    private val file: File,
-    private val metaFile: File,
-    private val serializer: KSerializer<T>
-) : DataLoader<T> {
-    override val value by lazy {
-        file.inputStream().use { s ->
-            Json.decodeFromStream(serializer, s)
-        }
-    }
-
-    override val metadata: Metadata by lazy {
-        metaFile.inputStream().use { s ->
-            Json.decodeFromStream(serializer<Metadata>(), s)
-        }
-    }
-
-    override fun copy(metadata: Metadata) = LazyValueData(metadata, clazz, file, serializer)
 }

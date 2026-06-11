@@ -13,7 +13,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.zhufucdev.motion_emulator.BuildConfig
 import com.zhufucdev.motion_emulator.data.Telephonies
-import com.zhufucdev.motion_emulator.data.DataLoader
+import com.zhufucdev.me.stub.Data
 import com.zhufucdev.motion_emulator.data.Emulations
 import com.zhufucdev.motion_emulator.data.Motions
 import com.zhufucdev.motion_emulator.data.Traces
@@ -90,18 +90,16 @@ class MainActivity : ComponentActivity() {
 
         initializer {
             val stores = listOf(Traces, Motions, Telephonies)
-            val data = mutableStateListOf<DataLoader<*>>()
+            val data = mutableStateListOf<Data>()
             ManagerViewModel(
                 data = data,
                 dataLoader = flow {
                     emit(false)
                     if (data.isEmpty()) {
                         withContext(Dispatchers.IO) {
+                            stores.forEach { it.require(this@MainActivity) }
                             data.addAll(
-                                stores.flatMap {
-                                    it.require(this@MainActivity)
-                                    it.list()
-                                }.sortedBy { it.id }
+                                stores.flatMap { it.list() }.sortedBy { it.id }
                             )
                         }
                     }

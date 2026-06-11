@@ -88,11 +88,7 @@ object Scheduler {
         port = prefs.getString("provider_port", "")!!.toIntOrNull() ?: 20230
         tls = prefs.getBoolean("provider_tls", true)
         server = embeddedServer(Netty, applicationEngineEnvironment {
-            if (tls) {
-                configureSsl(port)
-            } else {
-                configure(port)
-            }
+            configure(port)
 
             module(Application::eventServer)
         })

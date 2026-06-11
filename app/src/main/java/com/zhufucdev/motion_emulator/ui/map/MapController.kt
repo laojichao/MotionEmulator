@@ -141,7 +141,7 @@ abstract class MapController(val context: Context) {
                     context.getString(com.zhufucdev.motion_emulator.R.string.text_near, it)
                 } ?: context.getSharedPreferences("settings", Context.MODE_PRIVATE).effectiveTimeFormat().dateString()
 
-                val result = DrawResult(name, points, CoordinateSystem.WGS84)
+                val result = DrawResult(name, points, points.first().coordinateSystem)
                 completeListener?.invoke(result)
                 return result
             }
@@ -210,6 +210,15 @@ abstract class MapController(val context: Context) {
             override fun undo() {
                 pen.undo()
             }
+        }
+
+        // 检查 GPS provider 是否可用
+        val gpsAvailable = locationManager.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)
+                || android.os.Build.VERSION.SDK_INT < 31
+                || locationManager.hasProvider(android.location.LocationManager.GPS_PROVIDER)
+
+        if (!gpsAvailable) {
+            throw RuntimeException("No gps")
         }
 
         // 注册 GPS 位置监听器

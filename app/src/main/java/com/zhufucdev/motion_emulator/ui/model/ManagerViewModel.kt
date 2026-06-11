@@ -6,7 +6,6 @@ import android.net.Uri
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import com.zhufucdev.me.stub.Data
-import com.zhufucdev.me.stub.Metadata
 import com.zhufucdev.motion_emulator.R
 import com.zhufucdev.motion_emulator.data.*
 import com.zhufucdev.motion_emulator.extension.FILE_PROVIDER_AUTHORITY
@@ -27,55 +26,52 @@ import java.io.OutputStream
 
 @SuppressLint("StaticFieldLeak")
 class ManagerViewModel(
-    val data: MutableList<DataLoader<*>> = mutableListOf(),
+    val data: MutableList<Data> = mutableListOf(),
     val dataLoader: Flow<Boolean> = emptyFlow(),
     private val context: Context,
     val stores: List<DataStore<*>>
 ) : ViewModel() {
-    private val storeByType by lazy { stores.associateBy { it.typeName } }
-    val storeByClass by lazy { stores.associateBy { it.clazz } }
+    val storeByType by lazy { stores.associateBy { it.typeName } }
 
-    suspend fun <T : Data> remove(item: DataLoader<T>) {
+    fun findStoreForItem(item: Data): DataStore<*>? {
+        return stores.find { store -> store.list().any { it.id == item.id } }
+    }
+
+    suspend fun <T : Data> remove(item: T) {
         withContext(Dispatchers.IO) {
-            val store =
-                storeByClass[item.clazz] ?: error("unsupported type ${item::class.simpleName}")
+            val store = storeByType.values.find { it.list().any { it.id == item.id } }
+                ?: error("unsupported type ${item::class.simpleName}")
             @Suppress("UNCHECKED_CAST")
             (store as DataStore<T>).delete(item, context)
         }
     }
 
-    suspend fun <T : Data> save(item: DataLoader<T>) {
+    suspend fun <T : Data> save(item: T) {
         withContext(Dispatchers.IO) {
-            val store =
-                storeByClass[item.clazz] ?: error("unsupported type ${item::class.simpleName}")
+            val store = storeByType.values.find { it.list().any { it.id == item.id } }
+                ?: error("unsupported type ${item::class.simpleName}")
             @Suppress("UNCHECKED_CAST")
-            (store as DataStore<T>).put(item, overwrite = true)
+            (store as DataStore<T>).store(item, overwrite = true)
         }
     }
 
-    suspend fun <T : Data> save(item: T, metadata: Metadata) {
-        save(WorkingData(item, metadata))
-    }
-
-    fun <T : Data> update(newValue: DataLoader<T>) {
+    fun <T : Data> update(newValue: T) {
         val index = data.indexOfFirst { it.id == newValue.id }
-        data[index] = newValue
+        if (index >= 0) {
+            data[index] = newValue
+        }
     }
 
-    suspend fun writeInto(stream: OutputStream, items: Map<String, List<DataLoader<*>>>) {
+    suspend fun writeInto(stream: OutputStream, items: Map<String, List<Data>>) {
         val bufOut = BufferedOutputStream(stream)
         val gzOut = GzipCompressorOutputStream(bufOut)
         val tarOut = TarArchiveOutputStream(gzOut)
 
-        items.forEach { (type, data) ->
-            fun <T : Data> export(loader: DataLoader<T>, store: DataStore<*>, dest: OutputStream) {
-                (store as DataStore<T>).export(loader, dest)
-            }
-            data.forEach { datum ->
+        items.forEach { (type, dataList) ->
+            dataList.forEach { datum ->
                 val tmpFile = File.createTempFile(type, null, context.cacheDir)
-                val store = storeByType[type]!!
                 tmpFile.outputStream().use { stream ->
-                    export(datum, store, stream)
+                    datum.writeTo(stream)
                 }
                 val entry = TarArchiveEntry(tmpFile, "${type}_${datum.id}.json")
                 tarOut.putArchiveEntry(entry)
@@ -93,7 +89,7 @@ class ManagerViewModel(
         }
     }
 
-    suspend fun getExportedUri(items: Map<String, List<DataLoader<*>>>): Uri {
+    suspend fun getExportedUri(items: Map<String, List<Data>>): Uri {
         val sharedDir = exportedDir()
         if (!sharedDir.exists()) sharedDir.mkdir()
         val file = File(
@@ -132,16 +128,14 @@ class ManagerViewModel(
             val store = storeByType[type] ?: error("unknown type $type")
 
             withContext(Dispatchers.IO) {
-                store.import(tarIn, overwrite = true)?.let { record ->
-                    data.apply {
-                        val oldIndex = indexOfFirst { it.id == record.id }
-                        if (oldIndex < 0) {
-                            // insert
-                            add(record)
-                        } else {
-                            // update
-                            set(oldIndex, record)
-                        }
+                val json = tarIn.bufferedReader().readText()
+                val record = store.parseAndStore(json, overwrite = true)
+                data.apply {
+                    val oldIndex = indexOfFirst { it.id == record.id }
+                    if (oldIndex < 0) {
+                        add(record)
+                    } else {
+                        set(oldIndex, record)
                     }
                 }
             }

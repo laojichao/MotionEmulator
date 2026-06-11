@@ -38,7 +38,6 @@ class RecordDataFragment : Fragment() {
     private var telephony: TelephonyRecordCallback? = null
     private lateinit var types: ArrayList<Int>
     private var useTelephony = false
-    private var summarized = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,14 +66,11 @@ class RecordDataFragment : Fragment() {
         }
 
         fab.setOnClickListener {
-            if (!summarized) {
-                summarized = true
-                val motionResult = motion.summarize()
-                Motions.store(motionResult)
-                if (useTelephony) {
-                    val cellTimeline = telephony!!.summarize()
-                    Cells.store(cellTimeline)
-                }
+            val motionResult = motion.summarize()
+            Motions.store(motionResult)
+            if (useTelephony) {
+                val cellTimeline = telephony!!.summarize()
+                Cells.store(cellTimeline)
             }
             requireActivity().finish()
         }
@@ -84,10 +80,7 @@ class RecordDataFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        if (!summarized) {
-            summarized = true
-            motion.summarize()
-        }
+        motion.summarize()
     }
 
     private fun generateChart(type: Int): View {
@@ -117,7 +110,7 @@ class RecordDataFragment : Fragment() {
                     data.addEntry(Entry(moment.elapsed, value), index)
                 }
                 while ((data.dataSets.first() as LineDataSet).entryCount > 50) {
-                    data.dataSets.forEach { (it as LineDataSet).removeFirst() }
+                    data.dataSets.forEach { (it as LineDataSet).removeEntry(0) }
                 }
             }
             requireActivity().runOnUiThread {
@@ -156,7 +149,7 @@ class RecordDataFragment : Fragment() {
     }
 
     private fun telephonyChart(): View {
-        if (Build.VERSION.SDK_INT >= 28) {
+        if (Build.VERSION.SDK_INT >= 30) {
             val container = LinearLayoutCompat(requireContext()).apply {
                 orientation = LinearLayoutCompat.VERTICAL
             }

@@ -26,7 +26,7 @@ data class EmulationRef(
 }
 
 fun EmulationRef.emulation(): Emulation? {
-    val t = Traces[trace]?.value ?: return null
+    val t = Traces[trace] ?: return null
     return Emulation(
         t,
         StoredBox(motion, Motions),

@@ -1,5 +1,7 @@
 package com.zhufucdev.me.stub
 
+import kotlinx.serialization.Serializable
+
 /**
  * 数据元信息
  *
@@ -9,6 +11,7 @@ package com.zhufucdev.me.stub
  * @property name 数据名称，可为 null
  * @property creationTime 创建时间戳（毫秒），默认为当前时间
  */
+@Serializable
 data class Metadata(
     val name: String? = null,
     val creationTime: Long = System.currentTimeMillis()
