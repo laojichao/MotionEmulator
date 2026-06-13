@@ -109,9 +109,8 @@ object TelephonyRecorder {
                 @Deprecated("Deprecated in Java")
                 override fun onCellInfoChanged(cellInfo: MutableList<CellInfo>?) {
                     if (cellInfo != null) {
-                        val original = CellMoment(elapsed(), cellInfo)
-                        mergeIfPossible(timeline, original)
-                        updateListener?.invoke(original)
+                        val moment = mergeIfPossible(timeline, CellMoment(elapsed(), cellInfo))
+                        updateListener?.invoke(moment)
                     }
                 }
 
